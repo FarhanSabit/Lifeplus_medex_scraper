@@ -1,0 +1,30 @@
+{
+  "10 Vitamin & 6 Mineral [Pregnancy and Breast Feeding Formula]": {
+    "name": "10 Vitamin & 6 Mineral [Pregnancy and Breast Feeding Formula]",
+    "Indications": "This preparation is indicated for treatment of vitamin & mineral deficiency in pregnant and lactating mothers. It fulfills the increased demand of nutrients during pregnancy and lactation and thus ensures a healthy baby.",
+    "Composition": "Each tablet contains: <br />\r\n<ol>\r\n<li>Vitamin B1 USP 500 meg</li>\r\n<li>Vitamin B2 USP 750 meg</li>\r\n<li>Vitamin B3 USP 7.5 mg</li>\r\n<li>Vitamin B6 USP 0.75 mg</li>\r\n<li>Vitamin B12 USP 1.5 meg</li>\r\n<li>Folic acid USP 0.25 mg</li>\r\n<li>Vitamin C USP 15 mg</li>\r\n<li>Vitamin D USP 250 IU</li>\r\n<li>Vitamin E USP 5.2 IU</li>\r\n<li>Beta Carotene USP 3 mg</li>\r\n<li>Calcium (as Dibasic Calcium Phosphate BP) 59 mg</li>\r\n<li>Phosphorus (as Dibasic Calcium Phosphate BP) 45.6 mg</li>\r\n<li>Magnesium (as Magnesium Oxide USP) 15 mg</li>\r\n<li>Iron (as Ferrous Fumarate BP) 5 mg</li>\r\n<li>Zinc (as Zinc Sulfate Monohydrate USP) 8 mg</li>\r\n<li>Iodine (as Potassium Iodide USP) 125 meg</li>\r\n</ol>",
+    "Pharmacology": "This tablet is specially formulated with 16 essential nutrients to provide multivitamin & multimineral support when planning conception, throughout pregnancy and while breast feeding. It is carefully developed by experts so that all ingredients are within safe levels for pregnancy and are moderate rather than excessive. It provides iodine to promote healthy development of baby's brain, eyesight & hearing; provides folic acid that may reduce the risk of brain and/or spinal cord birth defects such as spina bifida if taken daily for 1 month prior to conception and throughout pregnancy. It also provides vitamin D to support calcium absorption to assist with healthy development of baby's bones.",
+    "Dosage & Administration": "Two tablets daily with a meal or as professionally prescribed.",
+    "Interaction": null,
+    "Contraindications": "This product is contraindicated in patients with a known hypersensitivity to any of the ingredients.",
+    "Side Effects": "No clinically significant side effects or toxicity are reported with such kind of preparation.",
+    "Pregnancy & Lactation": "It is recommended to use in pregnancy and lactation.",
+    "Precautions & Warnings": "To be dispensed only on the prescription of a registered physician. Store below 30°C and dry place, protect from light. Keep out of reach of children.",
+    "Therapeutic Class": "Multi-vitamin & Multi-mineral combined preparations",
+    "Storage Conditions": "Keep in a cool and dry place, protect from light. Keep out of the reach of children."
+  },
+  "Acemetacin": {
+    "name": "Acemetacin",
+    "Indications": "Acemetacin is indicated in<br />\r\n<ul>\r\n<li>Pain & inflammation associated with musculoskeletal & joint disorders. Such as: Rheumatoid arthritis, Osteoarthritis, Low back pain.</li>\r\n<li>Pain after an operation.</li>\r\n</ul>",
+    "Composition": null,
+    "Pharmacology": "Acemetacin is a non-steroidal anti-inflammatory drug. It is also known as an NSAID. It works by blocking a substance in the body called cyclooxygenase (also known as COX) which is involved in the production of certain irritant chemicals in response to injury or rheumatic disease. By blocking the action of COX, Acemetacin reduces the symptoms of pain and inflammation.",
+    "Dosage & Administration": "The recommended starting dose is 120mg/day in divided doses, increasing to 180mg/day in divided doses, depending on patient response. For the treatment of elderly patients, adjustment of dosage is not normally required. However, NSAIDs should be used with particular care in older patients who may be more prone to adverse reactions. Acemetacin should be taken with food, milk or an antacid to reduce the possibility of gastro-intestinal disturbance.",
+    "Interaction": "Acemetacin reduces the antihypertensive effect of b-blockers. Increase risk of convulsion when used with quinolone. Concurrent use with aspirin, NSAIDs or corticosteroids may increase risk of GI bleeding. Increased risk of methotrexate toxicity when used together.",
+    "Contraindications": "Acemetacin is contraindicated to known hypersensitivity to Acemetacin or Indomethacin; peptic ulcer; safety in children is not established.",
+    "Side Effects": "Common side effects include anorexia, nausea, vomiting, diarrhoea and constipation, peptic ulceration, headache, dizziness & vertigo. Rarely confusion, depressed mood, oedema, chest pain, blood urea elevation are found.",
+    "Pregnancy & Lactation": "The safety of this medicine in human pregnancy and lactation has not been established. Some animal reproduction studies showed some toxic/ teratogenic effects on fetus. Therefore, use of this drug during pregnancy and lactation period is not recommended.",
+    "Precautions & Warnings": "Caution should be taken in elderly people, history of disorders affecting the stomach or intestines, inflammatory bowel disease such as Crohn's disease or ulcerative colitis, kidney disease, liver disease, heart failure.",
+    "Therapeutic Class": "Non-steroidal Anti-inflammatory Drugs (NSAIDs)",
+    "Storage Conditions": "Store in a cool and dry place, below 25°C and away from light."
+  }
+}
