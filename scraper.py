@@ -47,11 +47,11 @@ def debug_page_structure(url):
             print(f"Alternative data rows found: {len(data_rows_alt)}")
             
             # Look for any links containing "/brands/"
-            generic_links = [a['href'] for a in soup.find_all('a') if a.has_attr('href') and '/brands/' in a['href']]
-            print(f"Generic links found: {len(generic_links)}")
-            if generic_links:
+            brand_links = [a['href'] for a in soup.find_all('a') if a.has_attr('href') and '/brands/' in a['href']]
+            print(f"brand links found: {len(brand_links)}")
+            if brand_links:
                 print("Sample links:")
-                for link in generic_links[:5]:
+                for link in brand_links[:5]:
                     print(f"  - {link}")
             
             # Check if there's pagination
@@ -132,8 +132,8 @@ def extract_links_from_page(page_url):
             print("Attempting to extract links using regular expressions...")
             
             # Try using regex to find all URLs containing 'brands'
-            generic_urls = re.findall(r'href=[\'"]?([^\'" >]+/brands/[^\'" >]+)', response.text)
-            for url in generic_urls:
+            brand_urls = re.findall(r'href=[\'"]?([^\'" >]+/brands/[^\'" >]+)', response.text)
+            for url in brand_urls:
                 # Clean up the URL
                 url = url.replace('href="', '').replace("href='", '')
                 # Make sure it's a full URL
@@ -179,13 +179,6 @@ def scrape_medicine_details(url):
         else:
             med_data['name'] = "Unknown"
         
-        # Extract image URL (main image)
-        image_elem = soup.select_one('.product-image img')  # Adjust the selector as per the actual HTML
-        if image_elem and image_elem.has_attr('src'):
-            med_data['image_url'] = image_elem['src']
-        else:
-            med_data['image_url'] = "Not available"
-        
         # Extract pack image URL (from the <a> tag with the "pack image" link)
         pack_image_elem = soup.select_one('a.innovator-brand-badge')  # Selector for pack image link
         if pack_image_elem and pack_image_elem.has_attr('href'):
@@ -207,25 +200,54 @@ def scrape_medicine_details(url):
         else:
             med_data['manufacturer'] = "Not available"
         
-        # Extract Unit Price (from the <span> tag inside package-container)
-        # Fix the deprecated :contains pseudo-class with :-soup-contains
-        unit_price_elem = soup.select_one('div.package-container span[style="color: #3a5571;"]:-soup-contains("Unit Price:") + span')
-        if unit_price_elem:
-            med_data['unit_price'] = unit_price_elem.text.strip()
-        else:
-            med_data['unit_price'] = "Not available"
+        # Extract price information - NEW APPROACH FOR MULTIPLE PACKAGE TYPES
+        price_data = []
+        package_containers = soup.select('div.package-container')
         
-        # Extract Pack Size Info (from the <span class="pack-size-info">)
-        pack_size_info_elem = soup.select_one('span.pack-size-info')
-        if pack_size_info_elem:
-            med_data['pack_size_info'] = pack_size_info_elem.text.strip()
-        else:
-            med_data['pack_size_info'] = "Not available"
+        if package_containers:
+            for container in package_containers:
+                package_info = {}
+                
+                # Extract package type (e.g., "3 ml biopen", "3 ml cartridge")
+                package_type_elem = container.select_one('span[style="color: #3a5571;"]')
+                if package_type_elem:
+                    package_info['package_type'] = package_type_elem.text.strip()
+                
+                # Extract unit price
+                price_elem = package_type_elem.find_next('span') if package_type_elem else None
+                if price_elem:
+                    package_info['unit_price'] = price_elem.text.strip()
+                
+                # Extract pack size info
+                pack_size_elem = container.select_one('.pack-size-info')
+                if pack_size_elem:
+                    package_info['pack_size_info'] = pack_size_elem.text.strip()
+                
+                # Add to price data if we have at least a package type and price
+                if 'package_type' in package_info and 'unit_price' in package_info:
+                    price_data.append(package_info)
         
-        # Extract generic ID from URL
-        generic_id_match = re.search(r'/brands/(\d+)/', url)
-        if generic_id_match:
-            med_data['generic_id'] = generic_id_match.group(1)
+        # Add price data to med_data
+        if price_data:
+            med_data['price_data'] = price_data
+        else:
+            # Fall back to the old method if no package containers are found
+            unit_price_elem = soup.select_one('div.package-container span[style="color: #3a5571;"]:-soup-contains("Unit Price:") + span')
+            if unit_price_elem:
+                med_data['unit_price'] = unit_price_elem.text.strip()
+            else:
+                med_data['unit_price'] = "Not available"
+            
+            pack_size_info_elem = soup.select_one('span.pack-size-info')
+            if pack_size_info_elem:
+                med_data['pack_size_info'] = pack_size_info_elem.text.strip()
+            else:
+                med_data['pack_size_info'] = "Not available"
+        
+        # Extract brand ID from URL
+        brand_id_match = re.search(r'/brands/(\d+)/', url)
+        if brand_id_match:
+            med_data['brand_id'] = brand_id_match.group(1)
         
         # Collect all heading elements (e.g., h1, h2, h3, h4) to find sections
         all_headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'strong', '.section-title'])
@@ -235,7 +257,7 @@ def scrape_medicine_details(url):
             'Indications', 'Composition', 'Pharmacology', 'Dosage & Administration', 
             'Interaction', 'Contraindications', 'Side Effects', 'Pregnancy & Lactation', 
             'Precautions & Warnings', 'Therapeutic Class', 'Storage Conditions',
-            'Manufactured by','Common Questions'
+            'Manufactured by', 'Common Questions'
         ]
         
         details_container = soup.select_one('.drug-details, #drug-details, .medicine-details')
@@ -417,7 +439,7 @@ if __name__ == "__main__":
             med_data = scrape_medicine_details(url)
             all_data[url] = med_data
         
-        with open("medex_brands_data.json", "w") as f:
+        with open("medex_test_data.json", "w") as f:
             json.dump(all_data, f, indent=2)
     else:
         print("Invalid choice. Running site analysis...")
