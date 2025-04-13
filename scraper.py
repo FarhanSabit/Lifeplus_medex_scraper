@@ -1,4 +1,3 @@
-from langchain_medical_scraper import MedicalWebScraperAgent
 import os
 import time
 import json
@@ -47,8 +46,8 @@ def debug_page_structure(url):
             data_rows_alt = soup.select('.data-row')
             print(f"Alternative data rows found: {len(data_rows_alt)}")
             
-            # Look for any links containing "/generics/"
-            generic_links = [a['href'] for a in soup.find_all('a') if a.has_attr('href') and '/generics/' in a['href']]
+            # Look for any links containing "/brands/"
+            generic_links = [a['href'] for a in soup.find_all('a') if a.has_attr('href') and '/brands/' in a['href']]
             print(f"Generic links found: {len(generic_links)}")
             if generic_links:
                 print("Sample links:")
@@ -90,9 +89,9 @@ def extract_links_from_page(page_url):
         links = []
         
         # Try multiple selectors to find medication links
-        # Method 1: Look for direct links containing /generics/
+        # Method 1: Look for direct links containing /brands/
         for a_tag in soup.find_all('a'):
-            if a_tag.has_attr('href') and '/generics/' in a_tag['href']:
+            if a_tag.has_attr('href') and '/brands/' in a_tag['href']:
                 href = a_tag['href']
                 # Make sure it's a full URL
                 if href.startswith('http'):
@@ -105,7 +104,7 @@ def extract_links_from_page(page_url):
         # Method 2: Try to find links in table rows
         for row in soup.select('tr'):
             for a_tag in row.find_all('a'):
-                if a_tag.has_attr('href') and '/generics/' in a_tag['href']:
+                if a_tag.has_attr('href') and '/brands/' in a_tag['href']:
                     href = a_tag['href']
                     # Make sure it's a full URL
                     if href.startswith('http'):
@@ -118,7 +117,7 @@ def extract_links_from_page(page_url):
         # Method 3: Try to find links in any div with class containing 'data'
         for div in soup.select('div[class*="data"]'):
             for a_tag in div.find_all('a'):
-                if a_tag.has_attr('href') and '/generics/' in a_tag['href']:
+                if a_tag.has_attr('href') and '/brands/' in a_tag['href']:
                     href = a_tag['href']
                     # Make sure it's a full URL
                     if href.startswith('http'):
@@ -132,8 +131,8 @@ def extract_links_from_page(page_url):
             print("WARNING: No links found with any of the selectors.")
             print("Attempting to extract links using regular expressions...")
             
-            # Try using regex to find all URLs containing 'generics'
-            generic_urls = re.findall(r'href=[\'"]?([^\'" >]+/generics/[^\'" >]+)', response.text)
+            # Try using regex to find all URLs containing 'brands'
+            generic_urls = re.findall(r'href=[\'"]?([^\'" >]+/brands/[^\'" >]+)', response.text)
             for url in generic_urls:
                 # Clean up the URL
                 url = url.replace('href="', '').replace("href='", '')
@@ -179,44 +178,75 @@ def scrape_medicine_details(url):
             med_data['name'] = name_elem.text.strip()
         else:
             med_data['name'] = "Unknown"
-            
+        
+        # Extract image URL (main image)
+        image_elem = soup.select_one('.product-image img')  # Adjust the selector as per the actual HTML
+        if image_elem and image_elem.has_attr('src'):
+            med_data['image_url'] = image_elem['src']
+        else:
+            med_data['image_url'] = "Not available"
+        
+        # Extract pack image URL (from the <a> tag with the "pack image" link)
+        pack_image_elem = soup.select_one('a.innovator-brand-badge')  # Selector for pack image link
+        if pack_image_elem and pack_image_elem.has_attr('href'):
+            med_data['pack_image_url'] = pack_image_elem['href']
+        else:
+            med_data['pack_image_url'] = "Not available"
+        
+        # Extract Strength (from the <div title="Strength">)
+        strength_elem = soup.select_one('div[title="Strength"]')
+        if strength_elem:
+            med_data['strength'] = strength_elem.text.strip()
+        else:
+            med_data['strength'] = "Not available"
+        
+        # Extract Manufacturer (from the <div title="Manufactured by">)
+        manufacturer_elem = soup.select_one('div[title="Manufactured by"] a')
+        if manufacturer_elem:
+            med_data['manufacturer'] = manufacturer_elem.text.strip()
+        else:
+            med_data['manufacturer'] = "Not available"
+        
+        # Extract Unit Price (from the <span> tag inside package-container)
+        # Fix the deprecated :contains pseudo-class with :-soup-contains
+        unit_price_elem = soup.select_one('div.package-container span[style="color: #3a5571;"]:-soup-contains("Unit Price:") + span')
+        if unit_price_elem:
+            med_data['unit_price'] = unit_price_elem.text.strip()
+        else:
+            med_data['unit_price'] = "Not available"
+        
+        # Extract Pack Size Info (from the <span class="pack-size-info">)
+        pack_size_info_elem = soup.select_one('span.pack-size-info')
+        if pack_size_info_elem:
+            med_data['pack_size_info'] = pack_size_info_elem.text.strip()
+        else:
+            med_data['pack_size_info'] = "Not available"
+        
         # Extract generic ID from URL
-        generic_id_match = re.search(r'/generics/(\d+)/', url)
+        generic_id_match = re.search(r'/brands/(\d+)/', url)
         if generic_id_match:
             med_data['generic_id'] = generic_id_match.group(1)
         
+        # Collect all heading elements (e.g., h1, h2, h3, h4) to find sections
+        all_headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'strong', '.section-title'])
+        
         # Extract all sections
         sections = [
-            'Indications', 'Composition', 'Pharmacology', 
-            'Dosage & Administration', 'Interaction', 'Contraindications', 
-            'Side Effects', 'Pregnancy & Lactation', 
-            'Precautions & Warnings', 'Therapeutic Class', 'Storage Conditions'
+            'Indications', 'Composition', 'Pharmacology', 'Dosage & Administration', 
+            'Interaction', 'Contraindications', 'Side Effects', 'Pregnancy & Lactation', 
+            'Precautions & Warnings', 'Therapeutic Class', 'Storage Conditions',
+            'Manufactured by','Common Questions'
         ]
         
-        # First, let's check if we have a details container
         details_container = soup.select_one('.drug-details, #drug-details, .medicine-details')
-        
-        # Print some debug info
-        print(f"Details container found: {details_container is not None}")
-        
-        # Try to find all heading elements that might contain section titles
-        all_headings = soup.find_all(['h2', 'h3', 'h4', 'strong', 'b', '.section-title'])
-        print(f"Found {len(all_headings)} potential section headings")
-        
-        # Print the first few headings for debugging
-        for h in all_headings[:5]:
-            print(f"Potential heading: {h.text.strip()}")
         
         for section in sections:
             section_content = "Not available"
             
             # Try to find the section by different strategies
-            
-            # 1. Look for an element with an ID matching the section
             section_id = section.lower().replace(' & ', '-').replace(' ', '-')
             section_elem = soup.select_one(f'#{section_id}, .{section_id}')
             
-            # 2. Look for a heading containing the section text
             if not section_elem:
                 for heading in all_headings:
                     if section.lower() in heading.text.strip().lower():
@@ -225,34 +255,17 @@ def scrape_medicine_details(url):
             
             if section_elem:
                 # Try to get the content
-                # Method 1: Next sibling that's a div or p
                 next_elem = section_elem.find_next_sibling(['div', 'p', 'span'])
                 if next_elem:
                     section_content = next_elem.text.strip()
                 
-                # Method 2: Parent's next sibling
                 if section_content == "Not available" and section_elem.parent:
                     next_elem = section_elem.parent.find_next_sibling(['div', 'p', 'span'])
                     if next_elem:
                         section_content = next_elem.text.strip()
                 
-                # Method 3: All content until next heading
-                if section_content == "Not available":
-                    content_parts = []
-                    next_node = section_elem.next_sibling
-                    while next_node and (not isinstance(next_node, type(section_elem)) or 
-                                        not any(s.lower() in next_node.text.strip().lower() 
-                                                for s in sections if s != section)):
-                        if hasattr(next_node, 'text'):
-                            text = next_node.text.strip()
-                            if text:
-                                content_parts.append(text)
-                        next_node = next_node.next_sibling
-                    
-                    if content_parts:
-                        section_content = ' '.join(content_parts)
-            
-            med_data[section] = section_content
+                # Collect data
+                med_data[section] = section_content
         
         return med_data
         
@@ -266,7 +279,7 @@ def get_total_pages():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         }
-        response = requests.get("https://medex.com.bd/generics", headers=headers)
+        response = requests.get("https://medex.com.bd/brands", headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Find pagination with multiple approaches
@@ -304,20 +317,20 @@ def analyze_site():
     
     # Analyze main page
     print("\n=== Analyzing main page ===")
-    soup = debug_page_structure("https://medex.com.bd/generics")
+    soup = debug_page_structure("https://medex.com.bd/brands")
     
     # Analyze a specific medicine page
     print("\n=== Analyzing a specific medicine page ===")
-    debug_page_structure("https://medex.com.bd/generics/779/10-vitamin-6-mineral-pregnancy-and-breast-feeding-formula")
+    debug_page_structure("https://medex.com.bd/brands/779/10-vitamin-6-mineral-pregnancy-and-breast-feeding-formula")
     
     # Analyze the second page of results
     print("\n=== Analyzing second page ===")
-    debug_page_structure("https://medex.com.bd/generics?page=2")
+    debug_page_structure("https://medex.com.bd/brands?page=2")
     
     print("\nAnalysis complete. Check the debug HTML files for more information.")
 
-def scrape_medex_generics_full(max_pages=None, start_page=1):
-    """Scrape all generics from MedEx with improved debugging"""
+def scrape_medex_brands_full(max_pages=None, start_page=1):
+    """Scrape all brands from MedEx with improved debugging"""
     
     all_data = {}
     
@@ -336,7 +349,7 @@ def scrape_medex_generics_full(max_pages=None, start_page=1):
         print(f"Processing page {page_num}/{end_page}...")
         
         # Get the page URL
-        page_url = f"https://medex.com.bd/generics?page={page_num}"
+        page_url = f"https://medex.com.bd/brands?page={page_num}"
         
         # Extract links from the page
         links = extract_links_from_page(page_url)
@@ -357,7 +370,7 @@ def scrape_medex_generics_full(max_pages=None, start_page=1):
             all_data[link] = med_data
             
             # Save incrementally after each medicine
-            with open("medex_generics_data.json", "w") as f:
+            with open("medex_brands_data.json", "w") as f:
                 json.dump(all_data, f, indent=2)
             
             # Add a small random delay to be respectful
@@ -370,7 +383,7 @@ def scrape_medex_generics_full(max_pages=None, start_page=1):
     return all_data
 
 if __name__ == "__main__":
-    print("Starting MedEx generics scraping...")
+    print("Starting MedEx brands scraping...")
     
     # Choose which function to run
     print("Choose scraping mode:")
@@ -386,17 +399,17 @@ if __name__ == "__main__":
         analyze_site()
     elif scrape_mode == "2":
         print("Running full scrape with no limitations...")
-        result = scrape_medex_generics_full()
+        result = scrape_medex_brands_full()
     elif scrape_mode == "3":
         start_page = int(input("Enter start page number: "))
         max_pages = int(input("Enter number of pages to scrape: "))
         print(f"Scraping from page {start_page} for {max_pages} pages...")
-        result = scrape_medex_generics_full(max_pages=max_pages, start_page=start_page)
+        result = scrape_medex_brands_full(max_pages=max_pages, start_page=start_page)
     elif scrape_mode == "4":
         print("Testing with known URLs...")
         test_urls = [
-            "https://medex.com.bd/generics/779/10-vitamin-6-mineral-pregnancy-and-breast-feeding-formula",
-            "https://medex.com.bd/generics/21/acemetacin"
+            "https://medex.com.bd/brands/779/10-vitamin-6-mineral-pregnancy-and-breast-feeding-formula",
+            "https://medex.com.bd/brands/21/acemetacin"
         ]
         all_data = {}
         for url in test_urls:
@@ -404,7 +417,7 @@ if __name__ == "__main__":
             med_data = scrape_medicine_details(url)
             all_data[url] = med_data
         
-        with open("medex_test_data.json", "w") as f:
+        with open("medex_brands_data.json", "w") as f:
             json.dump(all_data, f, indent=2)
     else:
         print("Invalid choice. Running site analysis...")
