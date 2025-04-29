@@ -652,6 +652,8 @@ class MedicalWebScraperAgent:
             
             For medical data, ensure you extract accurate and complete information about:
             - Generic names and brand names
+            - Unit price and other price related information
+            - Medicine forms. e.g: Tablet, Syrup etc
             - Active ingredients and their amounts
             - Indications and usage guidelines
             - Dosage information for different conditions
@@ -692,6 +694,10 @@ class MedicalWebScraperAgent:
         
         Extract structured information including:
         - Generic name/title
+        - Brand names
+        - Unit price
+        - Medicine form
+        - Medicine image links
         - Active ingredients
         - Indications
         - Dosage information
