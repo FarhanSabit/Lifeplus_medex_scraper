@@ -185,6 +185,13 @@ def scrape_medicine_details(url):
             med_data['pack_image_url'] = pack_image_elem['href']
         else:
             med_data['pack_image_url'] = "Not available"
+
+        # Extract Genric (from the <div title="Generic Name">)
+        strength_elem = soup.select_one('div[title="Generic Name"]')
+        if strength_elem:
+            med_data['generic'] = strength_elem.text.strip()
+        else:
+            med_data['generic'] = "Not available"
         
         # Extract Strength (from the <div title="Strength">)
         strength_elem = soup.select_one('div[title="Strength"]')
